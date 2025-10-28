@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Management - Support</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="CSS/support.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Support</h1>
+    <div class="support-buttons">
+      <button id="callBtn" class="btn" title="Call">
+        <i class="fas fa-phone"></i> Call
+      </button>
+
+      <a href="mailto:nirmalyanandy555@gmail.com" class="btn" title="Email">
+        <i class="fas fa-envelope"></i> Gmail
+      </a>
+
+      <button id="termsBtn" class="btn" title="Terms & Conditions">
+        <i class="fas fa-file-contract"></i> Terms & Conditions
+      </button>
+
+      <button id="homeBtn" class="btn" title="Home">
+        <i class="fas fa-home"></i> Home
+      </button>
+
+      <button id="logoutBtn" class="btn" title="Logout">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+
+    <div id="callNumber">Contact Me: <strong>+91 7029649449</strong></div>
+
+    <div id="termsText" style="white-space: pre-line;">
+      <strong>Terms & Conditions</strong>
+
+      1. This is a free software; therefore, free modifications are available for 7 days after submission.
+
+      2. Payment must be cleared within 5 days of submission.
+
+      3. 50% payment should be done immediately after purchase.
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+         apiKey: "AIzaSyD0zcozmbyYE4IDuIp8lmYySD0vigy9WKs",
+         authDomain: "global-computer-a935b.firebaseapp.com",
+         projectId: "global-computer-a935b",
+         storageBucket: "global-computer-a935b.firebasestorage.app",
+         messagingSenderId: "370206730446",
+         appId: "1:370206730446:web:58ba7b260be80b7022c89f"
+       };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const callBtn = document.getElementById('callBtn');
+    const callNumberDiv = document.getElementById('callNumber');
+    const termsBtn = document.getElementById('termsBtn');
+    const termsText = document.getElementById('termsText');
+    const homeBtn = document.getElementById('homeBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Initially hide callNumber and termsText
+    callNumberDiv.style.display = 'none';
+    termsText.style.display = 'none';
+
+    callBtn.addEventListener('click', () => {
+      if (callNumberDiv.style.display === 'none') {
+        callNumberDiv.style.display = 'block';
+      } else {
+        callNumberDiv.style.display = 'none';
+      }
+    });
+
+    termsBtn.addEventListener('click', () => {
+      if (termsText.style.display === 'none') {
+        termsText.style.display = 'block';
+      } else {
+        termsText.style.display = 'none';
+      }
+    });
+
+    homeBtn.addEventListener('click', () => {
+      window.location.href = 'homepage.html';
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      }).catch(() => alert("Error logging out. Try again."));
+    });
+
+    // Load theme from Firestore on auth state change and apply dark or light mode
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      const userThemeDoc = doc(db, "userThemes", user.uid);
+      const docSnap = await getDoc(userThemeDoc);
+      if (docSnap.exists()) {
+        const savedTheme = docSnap.data().theme;
+        if (savedTheme === 'dark') {
+          document.body.classList.add('dark');
+        } else {
+          document.body.classList.remove('dark');
+        }
+      } else {
+        document.body.classList.remove('dark'); // default to light
+      }
+    });
+  </script>
+</body>
+</html>

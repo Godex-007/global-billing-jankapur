@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stocker - Dues</title>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="CSS/due.css">
+  <style>
+    .action-btn {
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      margin: 2px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .save-btn {
+      background-color: #28a745;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+      <div class="logo">Stocker - Dues</div>
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <button onclick="location.href='homepage.html'"><i class="fas fa-home"></i><span>Home</span></button>
+    <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+  </aside>
+
+  <section class="search-container">
+    <input type="text" id="searchFilter" placeholder="Search by name, contact, or bill no." />
+  </section>
+
+  <section class="form-container">
+    <form id="dueForm">
+      <input type="text" id="customerName" placeholder="Customer Name" required />
+      <input type="text" id="contact" placeholder="Contact" required />
+      <input type="text" id="billNo" placeholder="Bill No." required />
+      <input type="number" id="finalAmount" placeholder="Final Amount" required />
+      <input type="number" id="paidAmount" placeholder="Paid Amount" required />
+      <input type="number" id="dueAmount" placeholder="Due" readonly />
+      <button type="submit">Add Due</button>
+    </form>
+  </section>
+
+  <main class="content">
+    <h2>Due Records</h2>
+    <table class="sales-table">
+      <thead>
+        <tr>
+          <th>Bill No.</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Final</th>
+          <th>Paid</th>
+          <th>Due</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="dueTable"></tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, updateDoc, doc, deleteDoc,
+      onSnapshot, serverTimestamp, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const hamburger = document.getElementById("hamburger");
+    const sidebar = document.getElementById("sidebar");
+    const form = document.getElementById("dueForm");
+    const tableBody = document.getElementById("dueTable");
+    const finalInput = document.getElementById("finalAmount");
+    const paidInput = document.getElementById("paidAmount");
+    const dueInput = document.getElementById("dueAmount");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const searchFilter = document.getElementById("searchFilter");
+
+    let allDues = [];
+    let unsubscribeDues = null;
+
+    hamburger.addEventListener("click", () => {
+      hamburger.classList.toggle("active");
+      sidebar.classList.toggle("open");
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      if(unsubscribeDues) unsubscribeDues();
+      signOut(auth).then(() => window.location.href = "index.html");
+    });
+
+    function updateDueField() {
+      const f = parseFloat(finalInput.value) || 0;
+      const p = parseFloat(paidInput.value) || 0;
+      dueInput.value = f - p;
+    }
+    finalInput.addEventListener("input", updateDueField);
+    paidInput.addEventListener("input", updateDueField);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("customerName").value.trim();
+      const contact = document.getElementById("contact").value.trim();
+      const billNo = document.getElementById("billNo").value.trim();
+      const finalAmount = parseFloat(finalInput.value);
+      const paidAmount = parseFloat(paidInput.value);
+      const due = finalAmount - paidAmount;
+
+      await addDoc(collection(db, "dues"), {
+        name, contact, billNo, finalAmount, paidAmount, due,
+        createdAt: serverTimestamp(),
+        date: serverTimestamp(),
+        clearAt: due === 0 ? new Date(Date.now() + 15*24*60*60*1000) : null
+      });
+
+      form.reset();
+      dueInput.value = "";
+    });
+    
+    function formatDateForInput(dateObj) {
+        if (!dateObj) return '';
+        const d = dateObj instanceof Date ? dateObj : dateObj.toDate();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${month}-${day}`;
+    }
+
+    function renderTable(dues) {
+      tableBody.innerHTML = "";
+      dues.forEach(d => {
+        const row = document.createElement("tr");
+        if (d.due === 0) row.style.background = "#d3d3d3";
+        const formattedDate = d.date ? formatDateForInput(d.date) : '';
+        row.innerHTML = `
+          <td>${d.billNo || 'N/A'}</td>
+          <td>${d.name}</td>
+          <td>${d.contact}</td>
+            <td><input type="number" value="${d.finalAmount}" data-id="${d.id}" data-field="finalAmount" style="width:80px"></td>
+          <td><input type="number" value="${d.paidAmount}" data-id="${d.id}" data-field="paidAmount" style="width:80px"></td>
+          <td>₹${d.due}</td>
+          <td><input type="date" value="${formattedDate}" data-id="${d.id}"></td>
+          <td>
+            <button class="action-btn save-btn" data-save="${d.id}">Save</button>
+            <button class="action-btn delete-btn" data-delete="${d.id}">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    tableBody.addEventListener("click", async (e) => {
+      if (e.target.dataset.save) {
+        const id = e.target.dataset.save;
+        
+        const finalValInput = document.querySelector(`input[data-id="${id}"][data-field="finalAmount"]`);
+        const paidValInput = document.querySelector(`input[data-id="${id}"][data-field="paidAmount"]`);
+        
+        const finalVal = parseFloat(finalValInput.value);
+        const paidVal = parseFloat(paidValInput.value);
+
+        if (isNaN(finalVal) || isNaN(paidVal)) {
+            alert("Please enter valid numbers for Final and Paid amounts.");
+            return;
+        }
+
+        const newDue = finalVal - paidVal;
+        const ref = doc(db, "dues", id);
+        
+        await updateDoc(ref, {
+          finalAmount: finalVal,
+          paidAmount: paidVal,
+          due: newDue,
+          date: serverTimestamp(),
+          clearAt: newDue === 0 ? new Date(Date.now() + 15*24*60*60*1000) : null
+        });
+      }
+
+      if (e.target.dataset.delete) {
+        const id = e.target.dataset.delete;
+        if (confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
+            try {
+                await deleteDoc(doc(db, "dues", id));
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Failed to delete the record. Please try again.");
+            }
+        }
+      }
+    });
+
+    tableBody.addEventListener("change", async (e) => {
+        if (e.target.type === 'date') {
+            const id = e.target.dataset.id;
+            const newDate = e.target.value;
+            if (id && newDate) {
+                const ref = doc(db, "dues", id);
+                await updateDoc(ref, {
+                    date: new Date(newDate)
+                });
+            }
+        }
+    });
+
+    searchFilter.addEventListener("input", () => {
+      const term = searchFilter.value.toLowerCase();
+      const filtered = allDues.filter(d =>
+        d.name.toLowerCase().includes(term) || 
+        d.contact.toLowerCase().includes(term) ||
+        (d.billNo && d.billNo.toLowerCase().includes(term))
+      );
+      renderTable(filtered);
+    });
+    
+    function setupDuesListener(userId) {
+        if(unsubscribeDues) unsubscribeDues();
+        
+        const duesCollection = collection(db, "dues");
+        unsubscribeDues = onSnapshot(duesCollection, (snapshot) => {
+            allDues = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+            allDues.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+            
+            const term = searchFilter.value.toLowerCase();
+            if (term) {
+                const filtered = allDues.filter(d =>
+                    d.name.toLowerCase().includes(term) || 
+                    d.contact.toLowerCase().includes(term) ||
+                    (d.billNo && d.billNo.toLowerCase().includes(term))
+                );
+                renderTable(filtered);
+            } else {
+                renderTable(allDues);
+            }
+
+            allDues.forEach(async d => {
+                if (d.due === 0 && d.clearAt && d.clearAt.toDate) {
+                    if (Date.now() >= d.clearAt.toDate().getTime()) {
+                        await deleteDoc(doc(db, "dues", d.id));
+                    }
+                }
+            });
+        });
+    }
+
+    function applyThemeClass(theme) {
+      document.body.classList.remove("light-theme", "dark-theme");
+      if (theme === "dark") document.body.classList.add("dark-theme");
+      else if (theme === "light") document.body.classList.add("light-theme");
+    }
+
+    function applySystemThemeFallback() {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyThemeClass(prefersDark ? "dark" : "light");
+    }
+
+    async function loadThemeFromFirestore(userId) {
+      if (!userId) {
+        applySystemThemeFallback();
+        return;
+      }
+      try {
+        const ref = doc(db, "userThemes", userId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          let themeValue = (snap.data().theme || "").trim().toLowerCase();
+          if (themeValue === "dark" || themeValue === "light") {
+            applyThemeClass(themeValue);
+            return;
+          }
+        }
+        applySystemThemeFallback();
+      } catch (err) {
+        console.error("Error loading theme:", err);
+        applySystemThemeFallback();
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            loadThemeFromFirestore(user.uid);
+            setupDuesListener(user.uid);
+        } else {
+            if(unsubscribeDues) unsubscribeDues();
+            window.location.href = "index.html";
+        }
+    });
+  </script>
+</body>
+</html>

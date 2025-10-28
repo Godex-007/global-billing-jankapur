@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stock Manager - Upload Product</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="CSS/upload.css" />
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-btn" onclick="location.href='homepage.html'">
+            <i class="fas fa-home"></i> <span>Home</span>
+        </button>
+        <button class="sidebar-btn" onclick="location.href='sales.html'">
+            <i class="fas fa-chart-line"></i> <span>Sales</span>
+        </button>
+        <button class="sidebar-btn" onclick="location.href='invoice.html'">
+            <i class="fas fa-file-invoice"></i> <span>Invoice</span>
+        </button>
+        <button class="sidebar-btn" onclick="location.href='stock.html'">
+            <i class="fas fa-box"></i> <span>Stock</span>
+        </button>
+    </div>
+
+    <div class="navbar">
+        <div class="menu-icon" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="logo"> 📦 Stocker - Upload</div>
+    </div>
+
+    <div class="upload-container">
+        <div class="upload-card">
+            <h2>Upload Product</h2>
+            <form id="uploadForm">
+                <div class="input-group">
+                    <label for="counter">Category</label>
+                    <select id="counter" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Anti Virus">🛡️ Anti Virus</option>
+                        <option value="Bluetooth Adapter">📡 Bluetooth Adapter</option>
+                        <option value="Cabinet">🖥️ Cabinet</option>
+                        <option value="CCTV">🎥 CCTV</option>
+                        <option value="CPU Fan">🌬️ CPU Fan</option>
+                        <option value="Data Cord">🔌 Data Cord</option>
+                        <option value="Drum">📦 Drum</option>
+                        <option value="Harddisk">💾 Harddisk</option>
+                        <option value="HDMI Cable">🔌 HDMI Cable</option>
+                        <option value="Keyboard">⌨️ Keyboard</option>
+                        <option value="Laptop">💻 Laptop</option>
+                        <option value="Laptop Cooling Pad">🆒 Laptop Cooling Pad</option>
+                        <option value="Lithium Battery">🔋 Lithium Battery</option>
+                        <option value="Monitor">🖥️ Monitor</option>
+                        <option value="Motherboard">🔧 Motherboard</option>
+                        <option value="Mouse">🖱️ Mouse</option>
+                        <option value="Pendrive">📀 Pendrive</option>
+                        <option value="Power Cord">🔌 Power Cord</option>
+                        <option value="Printer">🖨️ Printer</option>
+                        <option value="Printer Cable">🔗 Printer Cable</option>
+                        <option value="Printer Ink">🖊️ Printer Ink</option>
+                        <option value="Processor">⚙️ Processor</option>
+                        <option value="RAM">🧠 RAM</option>
+                        <option value="SMPS">⚡ SMPS</option>
+                        <option value="Sound Box">🔊 Sound Box</option>
+                        <option value="Sound Card">🎶 Sound Card</option>
+                        <option value="SSD">💽 SSD</option>
+                        <option value="Toner">🖋️ Toner</option>
+                        <option value="UPS">🔋 UPS</option>
+                        <option value="USB Hub">🔌 USB Hub</option>
+                        <option value="VGA Cable">📺 VGA Cable</option>
+                        <option value="WiFi Adapter">📶 WiFi Adapter</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="brand">Brand</label>
+                    <select id="brand" required>
+                        <option value="">Select Brand</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="customBrand">Type Brand (if not listed)</label>
+                    <input id="customBrand" type="text" placeholder="Enter custom brand name" />
+                </div>
+
+                <div class="input-group">
+                    <label for="productName">Product Name</label>
+                    <input id="productName" type="text" placeholder="e.g. Galaxy S24, iPhone 15" required />
+                </div>
+                
+                <div class="input-group">
+                    <label for="description">Product Description</label>
+                    <textarea id="description" placeholder="Enter product details" required></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="price">Price</label>
+                    <input id="price" type="number" placeholder="Enter price" required />
+                </div>
+
+                <div class="input-group">
+                    <label for="quantity">Quantity</label>
+                    <input id="quantity" type="number" placeholder="Enter quantity" required min="1" value="1" />
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="form-btn preview-btn">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <button type="button" class="form-btn clear-btn">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                    <button type="submit" class="form-btn upload-btn">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                    <button type="button" class="form-btn view-btn">
+                        <i class="fas fa-list"></i> View Products
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closePreview">&times;</span>
+            <h2>Product Preview</h2>
+            <div class="preview-grid" id="previewGrid"></div>
+            <div class="modal-btn-group">
+                <button type="button" class="modal-btn cancel-btn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="modal-btn confirm-upload-btn">
+                    <i class="fas fa-upload"></i> Confirm Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+       const firebaseConfig = {
+        apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+        authDomain: "global-computer-jankapur.firebaseapp.com",
+        projectId: "global-computer-jankapur",
+        storageBucket: "global-computer-jankapur.firebasestorage.app",
+        messagingSenderId: "972945821905",
+        appId: "1:972945821905:web:338f438404fba5442675f0"
+    };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const brands = {
+            "Anti Virus": ["Avast", "Bitdefender", "ESET", "Kaspersky", "K7", "McAfee", "Norton", "Quick Heal", "Seqrite"],
+            "Bluetooth Adapter": ["Asus", "Belkin", "Intex", "Targus", "TP-Link", "Zebronics"],
+            "Cabinet": ["Antec", "Ant Esports", "Circle", "Cooler Master", "Corsair", "Deepcool", "Frontech", "Gigabyte", "Intex", "NZXT", "Zebronics"],
+            "CCTV": ["CP Plus", "Dahua", "Godrej", "Hikvision", "Mi", "Panasonic", "TP-Link", "Zebronics"],
+            "CPU Fan": ["Antec", "Cooler Master", "Corsair", "Deepcool", "Noctua", "Thermaltake", "Zebronics"],
+            "Data Cord": ["AmazonBasics", "Belkin", "BlueRigger", "CableCreation", "Intex", "Portronics", "Tizum", "Zebronics"],
+            "Drum": ["Brother", "Canon", "HP", "Konica Minolta", "Ricoh", "Samsung"],
+            "Harddisk": ["ADATA", "Crucial", "Kingston", "Samsung", "Seagate", "Toshiba", "Transcend", "WD"],
+            "HDMI Cable": ["AmazonBasics", "Belkin", "BlueRigger", "Intex", "Portronics", "Tizum", "Zebronics"],
+            "Keyboard": ["Amkette", "Cosmic Byte", "Dell", "HP", "Lenovo", "Logitech", "Microsoft", "Rapoo", "Redgear", "TVS", "Zebronics"],
+            "Laptop": ["Acer", "Asus", "Dell", "HP", "Infinix", "Lenovo", "MI", "MSI", "Samsung"],
+            "Laptop Cooling Pad": ["Cooler Master", "Cosmic Byte", "Deepcool", "Tukzer", "Zebronics"],
+            "Lithium Battery": ["Amaron", "Exide", "Luminous", "Okaya", "Panasonic"],
+            "Monitor": ["Acer", "AOC", "Asus", "BenQ", "Dell", "HP", "LG", "Samsung", "ViewSonic", "Zebronics"],
+            "Motherboard": ["ASRock", "Asus", "Biostar", "Gigabyte", "Intel", "MSI", "Zebronics"],
+            "Mouse": ["Amkette", "Cosmic Byte", "Dell", "HP", "Lenovo", "Logitech", "Microsoft", "Rapoo", "Redgear", "Zebronics"],
+            "Pendrive": ["HP", "Kingston", "SanDisk", "Sony", "Strontium", "Transcend"],
+            "Power Cord": ["Belkin", "Frontech", "Intex", "Zebronics"],
+            "Printer": ["Brother", "Canon", "Epson", "HP", "Pantum", "Ricoh", "Samsung"],
+            "Printer Cable": ["Belkin", "Enter", "Intex", "Tobo", "Zebronics"],
+            "Printer Ink": ["Brother", "Canon", "Epson", "HP"],
+            "Processor": ["AMD", "Intel"],
+            "RAM": ["ADATA", "Corsair", "Crucial", "G.Skill", "Hynix", "Kingston", "Samsung", "Simmtronics", "Transcend", "XPG"],
+            "SMPS": ["Antec", "Ant Esports", "Circle", "Cooler Master", "Corsair", "Frontech", "Gigabyte", "Intex", "Zebronics"],
+            "Sound Box": ["Bose", "F&D", "Intex", "JBL", "Logitech", "Philips", "Sony", "Zebronics"],
+            "Sound Card": ["Asus", "Creative", "Intex", "Ugreen"],
+            "SSD": ["ADATA", "Consistent", "Crucial", "Gigabyte", "Kingston", "Samsung", "Seagate", "WD"],
+            "Toner": ["Brother", "Canon", "HP", "Ricoh", "Samsung"],
+            "UPS": ["APC", "Eaton", "iBall", "Luminous", "Microtek", "Numeric", "V-Guard"],
+            "USB Hub": ["Belkin", "Enter", "Intex", "Portronics", "TP-Link", "Ugreen", "Zebronics"],
+            "VGA Cable": ["AmazonBasics", "Enter", "Frontech", "Intex", "Zebronics"],
+            "WiFi Adapter": ["Asus", "D-Link", "Mercusys", "Netgear", "Tenda", "TP-Link", "Zebronics"]
+        };
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const uploadForm = document.getElementById('uploadForm');
+        const previewBtn = document.querySelector('.preview-btn');
+        const clearBtn = document.querySelector('.clear-btn');
+        const viewBtn = document.querySelector('.view-btn');
+        const previewModal = document.getElementById('previewModal');
+        const closePreview = document.getElementById('closePreview');
+        const previewGrid = document.getElementById('previewGrid');
+        const cancelBtn = document.querySelector('.cancel-btn');
+        const confirmUploadBtn = document.querySelector('.confirm-upload-btn');
+        const categorySelect = document.getElementById('counter');
+        const brandSelect = document.getElementById('brand');
+        const customBrandInput = document.getElementById('customBrand');
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            sidebar.classList.toggle('open');
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+                return;
+            }
+            const userThemeDoc = doc(db, "userThemes", user.uid);
+            const docSnap = await getDoc(userThemeDoc);
+            let theme = 'light';
+            if (docSnap.exists()) theme = docSnap.data().theme || 'light';
+            if (theme === 'dark') document.body.classList.add('dark-mode');
+            else document.body.classList.remove('dark-mode');
+        });
+
+        categorySelect.addEventListener('change', () => {
+            const selectedCategory = categorySelect.value;
+            brandSelect.innerHTML = '<option value="">Select Brand</option>';
+            if (brands[selectedCategory]) {
+                brands[selectedCategory].sort().forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand;
+                    option.textContent = brand;
+                    brandSelect.appendChild(option);
+                });
+            }
+        });
+
+        brandSelect.addEventListener('change', () => {
+            if (brandSelect.value) {
+                customBrandInput.value = "";
+                customBrandInput.disabled = true;
+            } else {
+                customBrandInput.disabled = false;
+            }
+        });
+
+        customBrandInput.addEventListener('input', () => {
+            if (customBrandInput.value.trim() !== "") {
+                brandSelect.value = "";
+                brandSelect.disabled = true;
+            } else {
+                brandSelect.disabled = false;
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            uploadForm.reset();
+            brandSelect.innerHTML = '<option value="">Select Brand</option>';
+            brandSelect.disabled = false;
+            customBrandInput.disabled = false;
+        });
+
+        previewBtn.addEventListener('click', () => {
+            const category = document.getElementById('counter').value || 'Not specified';
+            const brand = brandSelect.disabled ? customBrandInput.value : brandSelect.value || 'Not specified';
+            const productName = document.getElementById('productName').value || 'Not specified';
+            const description = document.getElementById('description').value || 'Not specified';
+            const price = document.getElementById('price').value ? `₹${parseFloat(document.getElementById('price').value).toFixed(2)}` : 'Not specified';
+            const quantity = document.getElementById('quantity').value || 'Not specified'; // Get quantity
+            
+            previewGrid.innerHTML = `
+                <div class="preview-item">Category:</div><div class="preview-value">${category}</div>
+                <div class="preview-item">Brand:</div><div class="preview-value">${brand}</div>
+                <div class="preview-item">Product Name:</div><div class="preview-value">${productName}</div>
+                <div class="preview-item">Description:</div><div class="preview-value">${description}</div>
+                <div class="preview-item">Price:</div><div class="preview-value">${price}</div>
+                <div class="preview-item">Quantity:</div><div class="preview-value">${quantity}</div>
+            `;
+            previewModal.style.display = 'flex';
+        });
+
+        closePreview.addEventListener('click', () => previewModal.style.display = 'none');
+        cancelBtn.addEventListener('click', () => previewModal.style.display = 'none');
+        window.addEventListener('click', e => { if (e.target === previewModal) previewModal.style.display = 'none'; });
+
+        async function uploadProduct() {
+            const category = document.getElementById('counter').value;
+            const brand = brandSelect.disabled ? customBrandInput.value : brandSelect.value;
+            const productName = document.getElementById('productName').value;
+            const description = document.getElementById('description').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const quantity = parseInt(document.getElementById('quantity').value, 10); // Get quantity as an integer
+
+            if (!category || !brand || !productName || !price || isNaN(quantity) || quantity < 1) {
+                alert("Please fill in all required fields and ensure quantity is at least 1.");
+                return;
+            }
+
+            // **UPDATED LOGIC**: Loop 'quantity' times to upload the product
+            try {
+                const productData = {
+                    category,
+                    brand,
+                    productName,
+                    description,
+                    price,
+                    createdAt: serverTimestamp()
+                };
+
+                for (let i = 0; i < quantity; i++) {
+                    await addDoc(collection(db, "products"), productData);
+                }
+
+                alert(`✅ ${quantity} product(s) uploaded successfully!`);
+                uploadForm.reset();
+                previewModal.style.display = 'none';
+                customBrandInput.disabled = false;
+                brandSelect.disabled = false;
+                brandSelect.innerHTML = '<option value="">Select Brand</option>';
+            } catch (error) {
+                alert("❌ Failed to upload products: " + error.message);
+            }
+        }
+
+        confirmUploadBtn.addEventListener('click', uploadProduct);
+        uploadForm.addEventListener('submit', e => { 
+            e.preventDefault(); 
+            uploadProduct();
+        });
+        viewBtn.addEventListener('click', () => { window.location.href = 'stock.html'; });
+    </script>
+</body>
+</html>

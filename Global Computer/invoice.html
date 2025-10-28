@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>📦 Stocker - Invoice</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="CSS/invoice.css">
+</head>
+<body>
+
+<header class="navbar" role="banner">
+    <button class="menu-icon" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar" type="button">
+        <span></span><span></span><span></span>
+    </button>
+    <div class="logo" aria-label="Site Logo">
+        <div class="logo"> 📦 Stocker - Invoice</div>
+    </div>
+</header>
+
+<nav class="sidebar" id="sidebar" role="navigation" aria-hidden="true">
+    <div class="search-bar">
+        <input type="text" id="productSearch" placeholder="Search products..." aria-label="Search products" />
+    </div>
+    <div class="vertical-line"></div>
+    <div id="productList" tabindex="0" aria-live="polite"></div>
+</nav>
+
+<div class="action-buttons">
+    <button onclick="addBillingRow()" aria-label="Add Row"><i class="fas fa-plus"></i>Add Row</button>
+    <button onclick="deleteBillingRow()" aria-label="Delete Last Row"><i class="fas fa-trash"></i>Delete Row</button>
+    <button onclick="printAndClear()" aria-label="Print"><i class="fas fa-print"></i>Print</button>
+    <button id="homeBtn" onclick="location.href='homepage.html'" aria-label="Home"><i class="fas fa-home"></i>Home</button>
+</div>
+
+<div class="billing-box" role="main" aria-label="Billing Section">
+    <header class="billing-header">
+      <div class="billing-left">
+        <h2>GLOBAL WORLD</h2>
+        <p>Borai Bazar ,In Front Of Borai PNB<br /> Paschim Medinipur, Pin - 721457 (W.B.)</p>
+        <p><strong>Contact:</strong>-6294501902/9933833066
+| <strong>Email:</strong> rupinfotechborai@gmail.com
+<div class="invoice-meta-fields">
+            <p><span>Memo No: </span> <input type="text" id="memoNo" placeholder="001" style="color: #000000; font-weight: 700;" /></p>
+            <p><span>Date: </span> <input type="date" id="billingDate" style="color: #000000; font-weight: 700;" /></p>
+        </div>
+</p>
+      </div>
+      <div class="billing-right">
+        
+        <img src="assets/logo.png" alt="Company Logo" height="160px"/>
+      </div>
+    </header>
+
+    <section class="client-details-section">
+        <div class="client-info">
+            <h3>INVOICE TO</h3>
+            <p><strong><input type="text" id="customerName" placeholder="Customer Name" /></strong></p>
+            <p><input type="text" id="customerContact" placeholder="Contact Number" /></p>
+            <p><input type="email" placeholder="Email Address" /></p>
+            <p><textarea id="customerAddress" placeholder="Customer Address"></textarea></p>
+        </div>
+         <div class="ship-to-info">
+            <h3>SHIP TO</h3>
+            <p><strong><input type="text" id="shipName" placeholder="Recipient Name" /></strong></p>
+            <p><input type="text" id="shipContact" placeholder="Contact Number" /></p>
+            <p><input type="email" placeholder="Email Address" /></p>
+            <p><textarea id="shipAddress" placeholder="Shipping Address"></textarea></p>
+        </div>
+    </section>
+
+    <table class="billing-table" aria-describedby="billingTableDesc">
+      <thead>
+        <tr>
+          <th scope="col">SL.</th>
+          <th scope="col">ITEM DESCRIPTION</th>
+          <th scope="col" class="text-right">PRICE</th>
+          <th scope="col" class="text-right">QUANTITY</th>
+          <th scope="col" class="text-right">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody id="billing-rows">
+        <tr>
+          <td><input type="text" value="1" readonly/></td>
+          <td class="description-cell">
+              <textarea></textarea>
+          </td>
+          <td><input type="number" class="price-input" value="" /></td>
+          <td><input type="number" class="quantity-input" value="" /></td>
+          <td><input type="text" class="total-input" value="₹0.00" readonly/></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="summary-section">
+        <div class="terms-payment-section">
+            <h4>PAYMENT METHOD</h4>
+             <div class="qrpay">
+                 <img src="assets/qr.jpg" alt="" height="80px">
+                 <img src="assets/upis.png" alt="" id="upi" height="50px">
+             </div>
+            <h4>Terms & Conditions</h4>
+           <p>Goods once purchased cannot be returned, but exchanged.
+</p>
+        </div>
+        <div class="totals-section">
+            <p><span>Subtotal:</span> <span id="subtotal-amount">₹0.00</span></p>
+            <p><span>Discount (₹):</span> <input type="number" id="discount-input" class="calculation-input" value="0"></p>
+            <div class="total-due">
+                <span>Total:</span>
+                <span id="total-amount">₹0.00</span>
+            </div>
+        </div>
+    </section>
+    
+    <section class="signature-section">
+        <div class="customer-signature-section">
+            <div class="signature-line"></div>
+             <p class="company-name">Customer Signature</p>
+        </div>
+        <div>
+            <div class="signature-line"></div>
+            <p class="company-name">Rup Infotech (Stamp & Sign)</p>
+        </div>
+    </section>
+
+    <footer class="billing-footer">
+        THANK YOU HAVE A GOOD DAY
+    </footer>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot, query, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const menuToggle = document.getElementById("menu-toggle");
+    const sidebar = document.getElementById("sidebar");
+    const productList = document.getElementById("productList");
+    const billingRows = document.getElementById("billing-rows");
+    const billingBox = document.querySelector('.billing-box');
+    let products = [];
+
+    async function fetchAndSetMemoNo() {
+        try {
+            const memoRef = doc(db, "settings", "memoCounter");
+            const memoSnap = await getDoc(memoRef);
+            if (memoSnap.exists()) {
+                const lastNo = memoSnap.data().lastNo || 0;
+                document.getElementById('memoNo').value = lastNo + 1;
+            } else {
+                console.log("Memo counter document does not exist!");
+                document.getElementById('memoNo').value = 1;
+            }
+        } catch (error) {
+            console.error("Error fetching memo number:", error);
+        }
+    }
+
+    function handleRowClick(event) {
+        const clickedRow = event.currentTarget;
+        billingRows.querySelectorAll('tr').forEach(row => {
+            row.classList.remove('selected-row');
+        });
+        clickedRow.classList.add('selected-row');
+    }
+
+    function attachRowClickListeners() {
+        billingRows.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', handleRowClick);
+        });
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        const rows = billingRows.querySelectorAll('tr');
+        rows.forEach(row => {
+            const price = parseFloat(row.querySelector('.price-input')?.value) || 0;
+            const quantity = parseFloat(row.querySelector('.quantity-input')?.value) || 0;
+            const rowTotal = price * quantity;
+            const totalInput = row.querySelector('.total-input');
+            if(totalInput) totalInput.value = `₹${rowTotal.toFixed(2)}`;
+            subtotal += rowTotal;
+        });
+
+        const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+        const finalTotal = subtotal - discount;
+
+        document.getElementById('subtotal-amount').textContent = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('total-amount').textContent = `₹${finalTotal.toFixed(2)}`;
+    }
+
+    billingBox.addEventListener('input', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            calculateTotals();
+        }
+    });
+
+    menuToggle.addEventListener("click", () => {
+        const expanded = menuToggle.classList.toggle("active");
+        sidebar.classList.toggle("open");
+        document.body.classList.toggle("sidebar-open");
+        menuToggle.setAttribute("aria-expanded", expanded);
+        sidebar.setAttribute("aria-hidden", !expanded);
+    });
+
+    async function fetchProducts() {
+        try {
+            if (products.length > 0) return;
+            const liteRef = collection(db, "productsLite");
+            const liteSnap = await getDocs(liteRef);
+            if (!liteSnap.empty) {
+                products = liteSnap.docs.map(d => ({
+                    id: d.id,
+                    brand: d.get('brand') || "",
+                    productName: d.get('productName') || d.get('name') || "",
+                    description: d.get('description') || "",
+                    price: d.get('price') || 0,
+                    category: d.get('category') || ""
+                }));
+                renderProductList(products);
+                return;
+            }
+            const q = query(collection(db, "products"), orderBy("productName"), limit(10000));
+            const snapshot = await getDocs(q);
+            products = snapshot.docs.map(d => ({
+                id: d.id,
+                brand: d.get('brand') || "",
+                productName: d.get('productName') || d.get('name') || "",
+                description: d.get('description') || "",
+                price: d.get('price') || 0,
+                category: d.get('category') || ""
+            }));
+            renderProductList(products);
+        } catch (e) {
+            console.error("Error fetching products:", e);
+        }
+    }
+
+    function renderProductList(list) {
+        productList.innerHTML = list.map(p => `
+            <div class="product" data-id="${p.id}" role="button" tabindex="0">
+                <strong>${(p.brand || "") + " " + (p.productName || p.name || "")}</strong>
+                <span>${p.description || ""}</span>
+                <div class="price">₹${Number(p.price || 0).toLocaleString("en-IN")}</div>
+            </div>
+        `).join("");
+        productList.querySelectorAll(".product").forEach(div => {
+            div.addEventListener("click", () => selectProduct(div.dataset.id));
+            div.addEventListener("keydown", e => { 
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectProduct(div.dataset.id); } 
+            });
+        });
+    }
+
+    function selectProduct(id) {
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+
+        let targetRow = billingRows.querySelector('.selected-row');
+        if (!targetRow) {
+            targetRow = Array.from(billingRows.querySelectorAll('tr')).find(row => {
+                const price = row.querySelector('.price-input')?.value;
+                return !price || price === '0';
+            });
+        }
+        if (!targetRow) {
+            window.addBillingRow();
+            targetRow = billingRows.querySelector('tr:last-child');
+        }
+
+        const desc = targetRow.cells[1].querySelector("textarea");
+        desc.value = `${(product.brand || "")} ${(product.productName || product.name || "")} - ${(product.description || "")}`.trim();
+        autoResize(desc);
+        targetRow.querySelector(".price-input").value = product.price || "";
+        const qtyInput = targetRow.querySelector(".quantity-input");
+        qtyInput.value = 1;
+        qtyInput.focus();
+        qtyInput.select();
+        
+        sidebar.classList.remove("open");
+        menuToggle.classList.remove("active");
+        menuToggle.setAttribute("aria-expanded", false);
+        sidebar.setAttribute("aria-hidden", true);
+        
+        calculateTotals();
+    }
+
+    document.getElementById("productSearch").addEventListener("input", e => {
+        const term = e.target.value.toLowerCase();
+        renderProductList(products.filter(p =>
+            (p.brand || "").toLowerCase().includes(term) ||
+            (p.productName || p.name || "").toLowerCase().includes(term) ||
+            (p.description || "").toLowerCase().includes(term)
+        ));
+    });
+
+    function autoResize(t) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }
+
+    function bindTextareas() { 
+        document.querySelectorAll("textarea").forEach(t => {
+            t.addEventListener("input", () => autoResize(t));
+            autoResize(t);
+        }); 
+    }
+
+    window.addBillingRow = () => {
+        const rowCount = billingRows.rows.length;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><input type="text" value="${rowCount + 1}" readonly /></td>
+            <td class="description-cell">
+                <textarea></textarea>
+            </td>
+            <td><input type="number" class="price-input" value="" /></td>
+            <td><input type="number" class="quantity-input" value="" /></td>
+            <td><input type="text" class="total-input" value="₹0.00" readonly /></td>
+        `;
+        billingRows.appendChild(row);
+        bindTextareas();
+        attachRowClickListeners();
+        calculateTotals();
+    };
+
+    window.deleteBillingRow = () => {
+        if (billingRows.rows.length > 1) {
+            billingRows.deleteRow(-1);
+            billingRows.querySelectorAll('tr').forEach((row, index) => {
+                row.querySelector('td:first-child input').value = index + 1;
+            });
+            calculateTotals();
+        } else {
+            alert("You must keep at least one row.");
+        }
+    };
+
+    window.printAndClear = async () => {
+        const subtotal = parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', ''));
+        if (subtotal <= 0) {
+            alert("Cannot print an empty invoice. Please add items.");
+            return;
+        }
+
+        try {
+            const memoRef = doc(db, "settings", "memoCounter");
+            await updateDoc(memoRef, {
+                lastNo: increment(1)
+            });
+            
+            window.print();
+            clearInvoice();
+
+        } catch (error) {
+            console.error("Error updating memo number:", error);
+            alert("Could not update the memo number. Please check the console and try again.");
+        }
+    };
+
+    function clearInvoice() {
+        billingRows.innerHTML = `
+            <tr>
+                <td><input type="text" value="1" readonly/></td>
+                <td class="description-cell">
+                    <textarea placeholder="Item Name & Details"></textarea>
+                </td>
+                <td><input type="number" class="price-input" value="" /></td>
+                <td><input type="number" class="quantity-input" value="" /></td>
+                <td><input type="text" class="total-input" value="₹0.00" readonly/></td>
+            </tr>
+        `;
+
+        document.getElementById("subtotal-amount").textContent = "₹0.00";
+        document.getElementById("total-amount").textContent = "₹0.00";
+        document.getElementById("discount-input").value = 0;
+
+        document.getElementById("customerName").value = "";
+        document.getElementById("customerContact").value = "";
+        document.getElementById("customerAddress").value = "";
+        document.getElementById("shipName").value = "";
+        document.getElementById("shipContact").value = "";
+        document.getElementById("shipAddress").value = "";
+        
+        fetchAndSetMemoNo();
+
+        calculateTotals();
+        bindTextareas();
+        attachRowClickListeners();
+    }
+
+    function applyThemeClass(theme) {
+        document.body.classList.remove("light-theme", "dark-theme");
+        if (theme === "dark") document.body.classList.add("dark-theme");
+        else if (theme === "light") document.body.classList.add("light-theme");
+    }
+
+    function applySystemThemeFallback() {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        applyThemeClass(prefersDark ? "dark" : "light");
+    }
+
+    async function loadThemeFromFirestore() {
+        try {
+            const ref = doc(db, "userThemes", "pEGPAbRzx1cBvRT11AeM7bL89X02");
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                let themeValue = (snap.data().theme || "").trim().toLowerCase();
+                if (themeValue === "dark" || themeValue === "light") {
+                    applyThemeClass(themeValue);
+                    return;
+                }
+            }
+            applySystemThemeFallback();
+        } catch (err) {
+            console.error("Error loading theme:", err);
+            applySystemThemeFallback();
+        }
+    }
+
+    function listenForThemeChanges() {
+        const ref = doc(db, "userThemes", "e5jzn9sBVkg18UBwfBltS0YV0022");
+        onSnapshot(ref, snap => {
+            if (snap.exists()) {
+                let themeValue = (snap.data().theme || "").trim().toLowerCase();
+                if (themeValue === "dark" || themeValue === "light") {
+                    applyThemeClass(themeValue);
+                    return;
+                }
+            }
+            applySystemThemeFallback();
+        });
+    }
+
+    function initializeInvoice() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('billingDate').value = `${yyyy}-${mm}-${dd}`;
+
+        bindTextareas();
+        attachRowClickListeners();
+        calculateTotals();
+        fetchProducts();
+        loadThemeFromFirestore();
+        listenForThemeChanges();
+        
+        fetchAndSetMemoNo();
+    }
+    
+    initializeInvoice();
+</script>
+
+</body>
+</html>

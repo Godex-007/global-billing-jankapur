@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Products</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="CSS/stock.css">
+</head>
+<body>
+  <header class="navbar" role="banner">
+    <button class="menu-icon" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar" type="button">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="logo" aria-label="Site Logo">
+      <div class="logo"> 📦 Stocker - Stocks</div>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar" role="navigation" aria-hidden="true">
+    <a href="#" id="homeBtn" class="sidebar-btn" tabindex="-1"><i class="fas fa-home"></i> Home</a>
+    <a href="#" id="uploadBtn" class="sidebar-btn" tabindex="-1"><i class="fas fa-upload"></i> Upload</a>
+  </nav>
+
+  <div id="mainContent">
+    <section class="search-container" role="search" aria-label="Product search">
+      <input type="text" id="searchInput" placeholder="Search by product name, brand, category, or description" aria-label="Search products"/>
+      <div class="date-filter">
+        <label for="datePicker">Date:</label>
+        <input type="date" id="datePicker" aria-label="Filter by upload date" />
+        <button id="clearDate" type="button" class="clear-btn">Clear</button>
+      </div>
+    </section>
+
+    <main class="main-scroll" role="main">
+      <div id="categoryContainer">
+        <div id="shopCol" aria-label="Categories" role="list"></div>
+        <div id="brandCol" aria-label="Brands" role="list"></div>
+        <div id="productCol" aria-label="Products" role="list"></div>
+      </div>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc, Timestamp, query } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.getElementById('sidebar');
+sidebar.querySelectorAll('a').forEach(link => link.tabIndex = -1);
+
+menuToggle.addEventListener('click', () => {
+  const expanded = menuToggle.classList.toggle('active');
+  sidebar.classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+  menuToggle.setAttribute('aria-expanded', expanded);
+  sidebar.setAttribute('aria-hidden', !expanded);
+  sidebar.querySelectorAll('a').forEach(link => link.tabIndex = expanded ? 0 : -1);
+});
+
+const params = new URLSearchParams(window.location.search);
+const theme = params.get('theme');
+if (theme === 'dark') document.body.classList.add('dark-mode');
+
+function navigateWithTheme(url) {
+  const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+  window.location.href = `${url}?theme=${currentTheme}`;
+}
+
+document.getElementById('homeBtn').addEventListener('click', e => {
+  e.preventDefault();
+  navigateWithTheme('homepage.html');
+});
+document.getElementById('uploadBtn').addEventListener('click', e => {
+  e.preventDefault();
+  navigateWithTheme('upload.html');
+});
+
+const shopCol = document.getElementById('shopCol');
+const brandCol = document.getElementById('brandCol');
+const productCol = document.getElementById('productCol');
+
+let allProducts = [];
+let filteredProducts = [];
+
+async function fetchProductsOnce() {
+  try {
+    const q = query(collection(db, "products"));
+    const snapshot = await getDocs(q);
+    allProducts = snapshot.docs.map(d => {
+      const data = d.data({ serverTimestamps: "estimate" });
+      return {
+        id: d.id,
+        productName: data.productName || "",
+        brand: data.brand || "",
+        category: data.category || "",
+        description: data.description || "",
+        price: data.price || 0,
+        createdAt: data.createdAt || null,
+        edited: data.edited || false
+      };
+    });
+    filteredProducts = [...allProducts];
+    loadCategories();
+  } catch (err) {
+    console.error("Error fetching products:", err);
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('datePicker').addEventListener('change', applyFilters);
+document.getElementById('clearDate').addEventListener('click', () => {
+  document.getElementById('datePicker').value = '';
+  applyFilters();
+});
+
+function applyFilters() {
+  const searchVal = document.getElementById('searchInput').value.toLowerCase();
+  const dateVal = document.getElementById('datePicker').value;
+  filteredProducts = allProducts.filter(p => {
+    const matchesSearch = [p.productName, p.brand, p.category, p.description]
+      .some(f => f && f.toLowerCase().includes(searchVal));
+    let matchesDate = true;
+    if (dateVal) {
+      const startOfDay = new Date(dateVal);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(dateVal);
+      endOfDay.setHours(23, 59, 59, 999);
+      let productDate;
+      if (p.createdAt && typeof p.createdAt.toDate === "function") {
+        productDate = p.createdAt.toDate();
+      } else {
+        productDate = new Date(p.createdAt);
+      }
+      matchesDate = productDate >= startOfDay && productDate <= endOfDay;
+    }
+    return matchesSearch && matchesDate;
+  });
+  loadCategories();
+}
+
+function loadCategories() {
+  const categories = [...new Set(filteredProducts.map(p => p.category))].sort((a, b) => a.localeCompare(b));
+  shopCol.innerHTML = categories.map(cat => {
+    const count = filteredProducts.filter(p => p.category === cat).length;
+    return `<div class="item" data-category="${cat}">${cat} <span class="count">(${count})</span></div>`;
+  }).join('');
+  brandCol.innerHTML = '';
+  productCol.innerHTML = '';
+}
+
+function loadBrands(category) {
+  const brands = [...new Set(filteredProducts.filter(p => p.category === category).map(p => p.brand))].sort((a, b) => a.localeCompare(b));
+  brandCol.innerHTML = brands.map(b => {
+    const count = filteredProducts.filter(p => p.category === category && p.brand === b).length;
+    return `<div class="item" data-brand="${b}">${b} <span class="count">(${count})</span></div>`;
+  }).join('');
+  productCol.innerHTML = '';
+}
+
+function loadProducts(category, brand) {
+  const products = filteredProducts.filter(p => p.category === category && p.brand === brand).sort((a, b) => a.productName.localeCompare(b.productName));
+  productCol.innerHTML = products.map(d => `
+    <div class="product" data-id="${d.id}">
+      <strong>${d.productName}</strong><br>
+      <span>${d.description || ''}</span><br>
+      <span class="price">₹${d.price}</span>
+      <span class="upload-time">${formatDate(d.createdAt)} ${d.edited ? "(Edited)" : ""}</span>
+      <button class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
+      <button class="delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
+    </div>
+  `).join('');
+}
+
+function formatDate(value) {
+  if (!value) return "No date";
+  let date;
+  if (typeof value === "string") date = new Date(value);
+  else if (typeof value.toDate === "function") date = value.toDate();
+  else date = new Date(value);
+  return isNaN(date) ? "Invalid Date" : date.toLocaleString('en-IN', { hour12: true });
+}
+
+shopCol.addEventListener('click', e => {
+  if (e.target.classList.contains('item')) {
+    const category = e.target.dataset.category;
+    shopCol.querySelectorAll('.item').forEach(el => el.classList.remove('active'));
+    e.target.classList.add('active');
+    loadBrands(category);
+  }
+});
+
+brandCol.addEventListener('click', e => {
+  if (e.target.classList.contains('item')) {
+    const brand = e.target.dataset.brand;
+    const category = shopCol.querySelector('.active')?.dataset.category;
+    brandCol.querySelectorAll('.item').forEach(el => el.classList.remove('active'));
+    e.target.classList.add('active');
+    loadProducts(category, brand);
+  }
+});
+
+productCol.addEventListener('click', async e => {
+  const productEl = e.target.closest('.product');
+  if (!productEl) return;
+  const id = productEl.dataset.id;
+  if (e.target.closest('.delete-btn')) {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const productData = allProducts.find(p => p.id === id);
+      if (!productData) throw new Error("Product data not found");
+      const salesData = { ...productData, createdAt: Timestamp.now() };
+      await setDoc(doc(db, "sales", id), salesData);
+      await deleteDoc(doc(db, "products", id));
+      allProducts = allProducts.filter(p => p.id !== id);
+      filteredProducts = filteredProducts.filter(p => p.id !== id);
+      applyFilters();
+    } catch (err) {
+      alert("Error deleting product: " + err.message);
+    }
+  }
+  if (e.target.closest('.edit-btn')) {
+    try {
+      const productData = allProducts.find(p => p.id === id);
+      if (!productData) throw new Error("Product not found");
+
+      // **EDITED SECTION**: Added prompt for product name
+      const newProductName = prompt("Edit product name:", productData.productName || "");
+      if (newProductName === null) return; // Exit if user cancels the first prompt
+      if (!newProductName.trim()) return alert("Product name cannot be empty."); // Validate for empty name
+
+      const newDesc = prompt("Edit description:", productData.description || "");
+      if (newDesc === null) return;
+
+      const newPrice = prompt("Edit price:", productData.price || "");
+      if (newPrice === null || isNaN(newPrice)) return alert("Invalid price");
+
+      const updatedData = {
+        ...productData,
+        productName: newProductName.trim(), // Added new product name to update object
+        description: newDesc,
+        price: Number(newPrice),
+        edited: true
+      };
+      
+      await setDoc(doc(db, "products", id), updatedData);
+      allProducts = allProducts.map(p => p.id === id ? updatedData : p);
+      filteredProducts = filteredProducts.map(p => p.id === id ? updatedData : p);
+      applyFilters();
+    } catch (err) {
+      alert("Error editing product: " + err.message);
+    }
+  }
+});
+
+(async function initialize() {
+  await fetchProductsOnce();
+  const categoryFromURL = params.get('category');
+  if (categoryFromURL) {
+    document.getElementById('searchInput').value = categoryFromURL;
+    applyFilters();
+  }
+})();
+</script>
+
+</body>
+</html>

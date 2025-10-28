@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Manager - Sales</title>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="CSS/sales.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+      <div class="logo">📦 Stocker - Sales</div>
+    </div>
+    <div class="sales-counters">
+      <div class="sales-counter">Total Sales: <span id="totalSales">₹0</span></div>
+      <div class="sales-counter">Units Sold: <span id="totalUnits">0</span></div>
+    </div>
+  </nav>
+  <aside class="sidebar" id="sidebar">
+    <button onclick="location.href='homepage.html'"><i class="fas fa-home"></i><span>Home</span></button>
+    <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+  </aside>
+  <section class="search-container" role="search" aria-label="Product search">
+    <input type="text" id="searchFilter" placeholder="Search by product name, brand, or description" aria-label="Search products" />
+    <div class="category-filter">
+      <label for="categoryFilter">Category:</label>
+      <select id="categoryFilter" aria-label="Filter by category">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="date-filter">
+      <label for="dateFilter">Date:</label>
+      <input type="date" id="dateFilter" aria-label="Filter by sale date" />
+      <button id="clearDate" type="button" class="clear-btn">Clear</button>
+    </div>
+  </section>
+  <main class="content">
+    <h2>Sales Overview</h2>
+    <table class="sales-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Brand</th>
+          <th>Product</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody id="salesBody"></tbody>
+    </table>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const dateFilter = document.getElementById('dateFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const searchFilter = document.getElementById('searchFilter');
+    const clearDateBtn = document.getElementById('clearDate');
+    const salesBody = document.getElementById('salesBody');
+    const totalSalesElement = document.getElementById('totalSales');
+    const totalUnitsElement = document.getElementById('totalUnits');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    let allSales = [];
+
+    function debounce(fn, delay) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      sidebar.classList.toggle('open');
+    });
+
+    clearDateBtn.addEventListener('click', () => {
+      dateFilter.value = '';
+      filterSales();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        window.location.href = 'index.html';
+      }).catch(error => {
+        console.error("Logout error:", error);
+      });
+    });
+
+    searchFilter.addEventListener('input', debounce(filterSales, 300));
+    categoryFilter.addEventListener('change', filterSales);
+    dateFilter.addEventListener('change', filterSales);
+
+    function renderSalesTable(sales) {
+      let total = 0;
+      salesBody.innerHTML = sales.map(sale => {
+        let saleDate = "N/A";
+        if (sale.createdAt) {
+          const d = new Date(sale.createdAt);
+          if (!isNaN(d)) {
+            saleDate = d.toLocaleDateString('en-GB');
+          }
+        }
+        const price = Number(sale.price) || 0;
+        total += price;
+        return `
+          <tr>
+            <td>${saleDate}</td>
+            <td>${sale.description || ''}</td>
+            <td>${sale.brand || ''}</td>
+            <td>${sale.productName || ''}</td>
+            <td>₹${price.toLocaleString('en-IN')}</td>
+          </tr>
+        `;
+      }).join('');
+      totalSalesElement.textContent = `₹${total.toLocaleString('en-IN')}`;
+      totalUnitsElement.textContent = sales.length;
+    }
+
+    function filterSales() {
+      let filtered = [...allSales];
+      const searchDateValue = dateFilter.value;
+      const categoryValue = categoryFilter.value;
+      const searchTerm = searchFilter.value.toLowerCase();
+
+      if (searchDateValue) {
+        filtered = filtered.filter(sale => {
+          if (!sale.createdAt) return false;
+          const saleDateStr = new Date(sale.createdAt).toISOString().split('T')[0];
+          return saleDateStr === searchDateValue;
+        });
+      } else {
+        const today = new Date();
+        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+        filtered = filtered.filter(sale => {
+          if (!sale.createdAt) return false;
+          return new Date(sale.createdAt) >= threeMonthsAgo;
+        });
+      }
+
+      if (categoryValue) {
+        filtered = filtered.filter(s => (s.category || '').toLowerCase() === categoryValue);
+      }
+
+      if (searchTerm) {
+        filtered = filtered.filter(s =>
+          (s.productName || '').toLowerCase().includes(searchTerm) ||
+          (s.brand || '').toLowerCase().includes(searchTerm) ||
+          (s.description || '').toLowerCase().includes(searchTerm)
+        );
+      }
+      renderSalesTable(filtered);
+    }
+
+    function populateCategoryOptions(sales) {
+      const uniqueCategories = [...new Set(sales.map(s => s.category).filter(Boolean))].sort();
+      categoryFilter.innerHTML = `<option value="">All Categories</option>`;
+      uniqueCategories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat.toLowerCase();
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+      });
+    }
+
+    function subscribeToSales() {
+      const salesRef = collection(db, 'sales');
+      onSnapshot(salesRef, (snapshot) => {
+        allSales = snapshot.docs.map(doc => {
+          const data = doc.data();
+          if (data.createdAt && typeof data.createdAt === 'string') {
+            const parsableDateString = data.createdAt.replace(' at', '').replace(/ UTC\+.*/, '');
+            const dateObject = new Date(parsableDateString);
+            if (!isNaN(dateObject)) {
+              data.createdAt = dateObject.toISOString();
+            }
+          } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            data.createdAt = data.createdAt.toDate().toISOString();
+          }
+          return { id: doc.id, ...data };
+        });
+        populateCategoryOptions(allSales);
+        filterSales();
+      }, (error) => {
+        console.error("Realtime sales error:", error);
+      });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        const userThemeDoc = doc(db, "userThemes", user.uid);
+        const docSnap = await getDoc(userThemeDoc);
+        let theme = 'light';
+        if (docSnap.exists()) {
+          theme = docSnap.data().theme || 'light';
+        }
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+      } catch(e) {
+        console.error("Error loading theme:", e);
+      }
+      subscribeToSales();
+    });
+  </script>
+</body>
+</html>

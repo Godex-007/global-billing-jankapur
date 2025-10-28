@@ -1,0 +1,506 @@
+
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+        :root {
+          --bg-color: #ffffff;
+          --text-color: #222;
+          --accent-color: #007bff;
+          --border-color: #ddd;
+          --product-bg: #f8f8f8;
+          --product-hover-bg: #e0e0e0;
+          --radius: 8px;
+          --transition-speed: 0.35s;
+          --input-bg: #fff;
+          --input-border: #007bff;
+          --billing-font: 'Lato', sans-serif;
+          --invoice-primary-color: #ffb700;
+          --invoice-dark-color: #212529;
+          --invoice-text-color: #333;
+          --invoice-secondary-text-color: #6c757d;
+          --invoice-border-color: #e9ecef;
+          --invoice-page-background: #f8f9fa;
+          --invoice-background: #ffffff;
+        }
+        body {
+          background: var(--invoice-page-background);
+          color: var(--text-color);
+          font-family: Arial, sans-serif;
+          margin: 0;
+          transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+          min-height: 100vh;
+        }
+        .dark-theme {
+          --bg-color: #0e141f;
+          --text-color: #ffeef0;
+          --accent-color: #f02849;
+          --border-color: #f02849;
+          --product-bg: rgba(18, 22, 34, 0.95);
+          --product-hover-bg: #2b2b2b;
+          --input-bg: #1b2433;
+          --input-border: #f02849;
+        }
+        .light-theme {
+          --bg-color: #ffffff;
+          --text-color: #222;
+          --accent-color: #007bff;
+          --border-color: #ddd;
+          --product-bg: #f8f8f8;
+          --product-hover-bg: #e0e0e0;
+          --input-bg: #fff;
+          --input-border: #007bff;
+        }
+        .navbar {
+          display: flex;
+          align-items: center;
+          background: var(--accent-color);
+          color: #fff;
+          padding: 0.5rem 1rem;
+          transition: background var(--transition-speed) ease;
+        }
+        .logo {
+          font-size: large;
+          font-family: 'Courier New', Courier, monospace;
+          font-weight: 900;
+        }
+        .menu-icon {
+          display: inline-block;
+          cursor: pointer;
+          background: none;
+          border: none;
+          padding: 0;
+          margin-right: 1rem;
+        }
+        .menu-icon span {
+          display: block;
+          width: 24px;
+          height: 3px;
+          background: #fff;
+          margin: 5px 0;
+          border-radius: 2px;
+          transition: var(--transition-speed) ease;
+        }
+        .menu-icon.active span:nth-child(1) {
+          transform: rotate(45deg) translate(5px, 5px);
+          background: var(--invoice-primary-color);
+        }
+        .menu-icon.active span:nth-child(2) {
+          opacity: 0;
+        }
+        .menu-icon.active span:nth-child(3) {
+          transform: rotate(-45deg) translate(5px, -5px);
+          background: var(--invoice-primary-color);
+        }
+        .sidebar {
+          position: fixed;
+          top: 50px;
+          left: -260px;
+          width: 260px;
+          height: calc(100% - 50px);
+          background: var(--bg-color);
+          border-right: 1px solid var(--border-color);
+          transition: left var(--transition-speed) ease;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+        }
+        .sidebar.open {
+          left: 0;
+        }
+        .search-bar {
+          position: sticky;
+          top: 0;
+          background: var(--bg-color);
+          padding-top: 10px;
+          z-index: 2;
+        }
+        .search-bar input[type="text"] {
+          width: 80%;
+          padding: 8px 12px;
+          margin: 10px;
+          border: 2px solid var(--accent-color);
+          border-radius: var(--radius);
+          font-size: 14px;
+          outline: none;
+          background: var(--input-bg);
+          color: var(--text-color);
+        }
+        .vertical-line {
+          position: sticky;
+          top: 52px;
+          width: 100%;
+          height: 2px;
+          background: var(--accent-color);
+          z-index: 1;
+        }
+        #productList {
+          flex: 1;
+          overflow-y: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        #productList::-webkit-scrollbar {
+          display: none;
+        }
+        .product {
+          background: var(--product-bg);
+          padding: 12px;
+          border-radius: var(--radius);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease, background var(--transition-speed) ease, border-color var(--transition-speed) ease, color var(--transition-speed) ease;
+          border: 2px solid var(--border-color);
+          color: var(--text-color);
+          cursor: pointer;
+        }
+        .product:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+          border-color: var(--accent-color);
+          background: var(--product-hover-bg);
+        }
+        .product strong {
+          display: block;
+          margin-bottom: 4px;
+        }
+        .price {
+          font-weight: bold;
+          color: #e91e63;
+        }
+        .action-buttons {
+          margin: 10px 0;
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+        }
+        .action-buttons button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 8px 14px;
+          border-radius: var(--radius);
+          border: 2px solid var(--accent-color);
+          background: transparent;
+          color: var(--accent-color);
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform var(--transition-speed) ease, color 0.4s ease, background 0.4s ease;
+        }
+        .action-buttons button:hover {
+          background: var(--accent-color);
+          color: #fff;
+          transform: translateY(-3px);
+        }
+        .billing-box {
+          background: var(--invoice-background);
+          max-width: 900px;
+          margin: 15px auto;
+          padding: 0;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+          border-radius: 6px;
+          overflow: hidden;
+          font-family: var(--billing-font);
+          color: var(--invoice-text-color);
+          font-size: 1em;
+        }
+        .billing-header {
+          background-color:#e1e3e4;
+          color: #000000;
+          padding: 12px 18px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          font-size: 1em;
+          font-weight: 600;
+        }
+        .billing-right{
+          margin-right: 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .billing-header .invoice-meta-fields {
+          display: flex;
+          gap: 12px;
+          margin-top: 6px;
+        }
+        .billing-header .invoice-meta-fields p {
+          font-size: 1em;
+          font-weight: 700;
+          margin: 0;
+          display: flex;
+          gap: 6px;
+        }
+        .billing-header .invoice-meta-fields input {
+          border: none;
+          background: transparent;
+          color: white;
+          font-size: 1em;
+          font-family: var(--billing-font);
+          border-bottom: 1px dashed transparent;
+        }
+        .billing-header .invoice-meta-fields input:focus {
+          outline: none;
+          border-bottom: 1px dashed var(--invoice-primary-color);
+        }
+        .billing-header h2 {
+          font-size: 1.7em;
+          font-weight: 900;
+          margin: 0;
+          color:#e91e39;
+          letter-spacing: 1px;
+        }
+        .client-details-section {
+          display: flex;
+          justify-content: space-between;
+          gap: 2px; /* reduced gap between columns */
+          padding: 10px 6px; /* reduced padding overall */
+        }
+
+        .client-info, 
+        .ship-to-info {
+          width: 49%; /* slightly increased width to fill gap */
+          font-size: 0.9em;
+          margin-left: 20px;
+        }
+
+        .client-info h3,
+        .ship-to-info h3 {
+          font-size: 0.95em;
+          margin-bottom: 2px; /* reduced heading-to-input spacing */
+        }
+
+        .client-info input,
+        .client-info textarea,
+        .ship-to-info input,
+        .ship-to-info textarea {
+          font-family: var(--billing-font);
+          width: 90%;
+          font-size: 0.88em; /* slightly smaller text */
+          
+          margin: 0; /* remove vertical margin */
+          border: none;
+          outline: none;
+          border-radius: 0;
+          background: transparent;
+          resize: none;
+        }
+
+
+
+        .billing-table {
+          width: calc(100% - 30px);
+          margin: 0 auto;
+          border-collapse: collapse;
+          font-size: 0.9em;
+        }
+        .billing-table th,
+        .billing-table td {
+          padding: 3px 6px;
+          text-align: left;
+        }
+        .billing-table thead {
+          background-color: var(--invoice-dark-color);
+          color: white;
+        }
+        .billing-table th {
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          font-size: 0.85em;
+        }
+        .billing-table tbody tr {
+          border-bottom: 1px solid var(--invoice-border-color);
+        }
+        .billing-table td:nth-child(1) {
+          width: 5%;
+        }
+        .billing-table td:nth-child(2) {
+          width: 40%;
+        }
+        .billing-table td:nth-child(3),
+        .billing-table td:nth-child(4),
+        .billing-table td:nth-child(5) {
+          width: 15%;
+          text-align: right;
+        }
+        .billing-table input,
+        .billing-table textarea {
+          border: none;
+          background-color: transparent;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+          font-family: var(--billing-font);
+          font-size: 0.9em;
+          resize: none;
+          line-height: 1.2;
+          color: var(--invoice-text-color);
+        }
+        .billing-table textarea {
+          line-height: 1.2;
+          min-height: 2em;
+          overflow: hidden;
+        }
+        .billing-table td:not(:nth-child(2)) input {
+          text-align: left;
+        }
+        .billing-table input:focus,
+        .billing-table textarea:focus {
+          outline: none;
+          border-bottom: 1px dashed var(--invoice-primary-color);
+        }
+        .summary-section {
+          padding: 8px 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          font-size: 0.9em;
+        }
+        .totals-section {
+          width: 45%;
+        }
+        .totals-section p {
+          display: flex;
+          justify-content: space-between;
+          margin: 0 0 4px 0;
+          align-items: center;
+        }
+        .totals-section .calculation-input {
+          border: none;
+          text-align: right;
+          font-weight: 700;
+          width: 85px;
+          font-size: 0.9em;
+          background: #f1f1f1;
+          border-radius: 3px;
+          padding: 2px;
+          font-family: var(--billing-font);
+        }
+        .totals-section .calculation-input:focus {
+          outline: 1px solid var(--invoice-primary-color);
+        }
+        .totals-section .total-due {
+          background-color:#ff3a3a;
+          padding: 5px;
+          color: #fff;
+          font-weight: 900;
+          font-size: 0.9em;
+          border-radius: 3px;
+          margin-top: 4px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .totals-section .final-due {
+          background-color: var(--invoice-dark-color);
+          padding: 5px;
+          color: white;
+          font-weight: 700;
+          font-size: 0.9em;
+          border-radius: 3px;
+          margin-top: 4px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .qrpay {
+          display: flex;
+          flex-direction: row;
+          gap: 6px;
+        }
+        #upi {
+          margin-top: 15px;
+        }
+        .terms-payment-section {
+          width: 48%;
+        }
+        .terms-payment-section h4 {
+          margin: 0 0 2px 0;
+          font-size: 0.9em;
+          color: var(--invoice-secondary-text-color);
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+        }
+        .terms-payment-section p {
+          margin: 2px 0;
+          font-size: 0.85em;
+          line-height: 1.2;
+          color: var(--invoice-secondary-text-color);
+        }
+        .signature-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-top: 50px;
+          padding: 0 12px;
+          font-size: 0.9em;
+        }
+        .signature-section > div {
+          width: 45%;
+        }
+        .customer-signature-section {
+          text-align: left;
+        }
+        .signature-section > div:last-child {
+          text-align: right;
+        }
+        .signature-line {
+          border-bottom: 1px solid var(--invoice-text-color);
+          height: 18px;
+          margin-bottom: 3px;
+          width: 150px;
+          display: inline-block;
+        }
+        .signature-section p {
+          margin: 0;
+          color: var(--invoice-secondary-text-color);
+          font-size: 0.85em;
+        }
+        .billing-footer {
+          background-color: var(--invoice-dark-color);
+          color: white;
+          text-align: center;
+          padding: 6px 8px;
+          font-weight: 500;
+          margin-top: 3%;
+          font-size: 0.85em;
+        }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+       @media print {
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .navbar,
+        .sidebar,
+        .action-buttons {
+            display: none;
+        }
+        .billing-box {
+            box-shadow: none;
+            border: none;
+            margin: 0;
+            max-width: 100%;
+            width: 100%;
+            border-radius: 0; 
+        }
+        input,
+        textarea {
+            border-bottom: 1px dashed transparent !important;
+        }
+
+    }

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>📦 Stocker - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" href="CSS/style.css" />
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo">📦 Stocker - Login</div>
+    <div class="dark-mode-toggle" id="darkModeToggle" title="Toggle Light/Dark Theme">
+        <i class="fas fa-moon" id="themeIcon"></i> Theme
+    </div>
+</div>
+
+<div class="login-container">
+    <div class="login-card">
+        <h2>Login (Jankapur)</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required />
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required />
+                <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+            </div>
+            <button type="submit" class="btn"><i class="fas fa-sign-in-alt"></i> <span>Login</span></button>
+            <div id="errorMsg" class="error-message"></div>
+            <div id="loginMessage" class="login-message"></div>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const errorMsg = document.getElementById('errorMsg');
+  const loginMessage = document.getElementById('loginMessage');
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  function applyTheme(theme) {
+    if(theme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeIcon.classList.remove('fa-moon');
+      themeIcon.classList.add('fa-sun');
+    } else {
+      document.body.classList.remove('dark-mode');
+      themeIcon.classList.remove('fa-sun');
+      themeIcon.classList.add('fa-moon');
+    }
+  }
+  onAuthStateChanged(auth, async (user) => {
+    if(user) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if(userDoc.exists() && userDoc.data().theme) {
+          applyTheme(userDoc.data().theme);
+          localStorage.setItem('theme', userDoc.data().theme);
+        } else {
+          applyTheme(localStorage.getItem('theme') || 'light');
+        }
+      } catch (e) {
+        console.error("Error fetching theme:", e);
+        applyTheme(localStorage.getItem('theme') || 'light');
+      }
+    } else {
+      applyTheme(localStorage.getItem('theme') || 'light');
+    }
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    errorMsg.style.display = 'none';
+    loginMessage.style.display = 'none';
+
+    signInWithEmailAndPassword(auth, email, password)
+    .then(async (userCredential) => {
+      const uid = userCredential.user.uid;
+      try {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if(userDoc.exists() && userDoc.data().theme) {
+          applyTheme(userDoc.data().theme);
+          localStorage.setItem('theme', userDoc.data().theme);
+        } else {
+          applyTheme(localStorage.getItem('theme') || 'light');
+        }
+      } catch (e) {
+        console.error("Error fetching theme after login:", e);
+        applyTheme(localStorage.getItem('theme') || 'light');
+      }
+      loginMessage.textContent = "Login successful!";
+      loginMessage.style.display = 'block';
+      setTimeout(() => {
+        window.location.href = "homepage.html";
+      }, 1200);
+    })
+    .catch((error) => {
+      let message = "An unexpected error occurred. Please try again.";
+      if (error.code === "auth/user-not-found") message = "No account found with this email.";
+      else if (error.code === "auth/wrong-password") message = "Incorrect password. Please try again.";
+      else if (error.code === "auth/invalid-email") message = "Invalid email format.";
+      else if (error.code === "auth/missing-password") message = "Please enter your password.";
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+    });
+  });
+
+  darkModeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    applyTheme(isDark ? 'dark' : 'light');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+
+  document.getElementById('togglePassword').addEventListener('click', () => {
+    const passwordField = document.getElementById('password');
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+    document.getElementById('togglePassword').classList.toggle('fa-eye');
+    document.getElementById('togglePassword').classList.toggle('fa-eye-slash');
+  });
+</script>
+
+</body>
+</html>

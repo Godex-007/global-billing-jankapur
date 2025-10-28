@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📦 Stocker - Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="CSS/homepage.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+      <div class="logo">📦 Stocker - Dashboard</div>
+    </div>
+    <div id="darkModeToggle" title="Toggle Light/Dark Theme">
+      <i class="fas fa-moon" id="themeIcon"></i> Theme
+    </div>
+  </nav>
+
+  <aside class="sidebar" id="sidebar">
+    <button id="stockBtn"><i class="fas fa-box"></i><span>Stock</span></button>
+    <button id="invoiceBtn"><i class="fas fa-file-invoice"></i><span>Invoice</span></button>
+    <button id="salesBtn"><i class="fas fa-chart-line"></i><span>Sales</span></button>
+    <button id="uploadBtn"><i class="fas fa-upload"></i><span>Upload</span></button>
+    <button id="supportBtn"><i class="fas fa-headset"></i><span>Support</span></button>
+     <button id="dueBtn"><i class="fas fa-book"></i><span>Dues</span></button>
+    <button class="logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+  </aside>
+
+  <main class="content">
+    <div class="card"><i class="fas fa-boxes-stacked"></i><h3>Total Stock</h3><p id="totalStock">0</p></div>
+    <div class="card"><i class="fas fa-indian-rupee-sign"></i><h3>Total Stock Value</h3><p id="totalStockPrice">0</p></div>
+    <div class="card"><i class="fas fa-chart-line"></i><h3>Total Sales</h3><p id="totalSales">0</p></div>
+    <div class="card"><i class="fas fa-cubes"></i>   <h3>Category</h3><p id="suppliers">0</p></div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+    // Updated Firebase config
+    const firebaseConfig = {
+    apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
+    authDomain: "global-computer-jankapur.firebaseapp.com",
+    projectId: "global-computer-jankapur",
+    storageBucket: "global-computer-jankapur.firebasestorage.app",
+    messagingSenderId: "972945821905",
+    appId: "1:972945821905:web:338f438404fba5442675f0"
+  };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const darkToggle = document.getElementById('darkModeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    const uploadBtn = document.getElementById('uploadBtn');
+    const stockBtn = document.getElementById('stockBtn');
+    const invoiceBtn = document.getElementById('invoiceBtn');
+    const salesBtn = document.getElementById('salesBtn');
+    const supportBtn = document.getElementById('supportBtn');
+    const dueBtn = document.getElementById('dueBtn');
+    const logoutBtn = document.querySelector('.logout');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      sidebar.classList.toggle('open');
+    });
+
+    const navigate = (page) => {
+      const theme = document.body.classList.contains('dark') ? 'dark' : 'light';
+      window.location.href = `${page}?theme=${theme}`;
+    };
+    uploadBtn.onclick = () => navigate('upload.html');
+    stockBtn.onclick = () => navigate('stock.html');
+    invoiceBtn.onclick = () => navigate('invoice.html');
+    salesBtn.onclick = () => navigate('sales.html');
+    dueBtn.onclick = () => navigate('due.html');
+    supportBtn.onclick = () => navigate('support.html');
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        localStorage.removeItem('theme');
+        window.location.href = "index.html";
+      }).catch(() => alert("Error logging out. Try again."));
+    });
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.body.classList.add('dark');
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+      } else {
+        document.body.classList.remove('dark');
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        const userThemeDoc = doc(db, "userThemes", user.uid);
+        const docSnap = await getDoc(userThemeDoc);
+        if (docSnap.exists()) {
+          const savedTheme = docSnap.data().theme;
+          applyTheme(savedTheme);
+          localStorage.setItem('theme', savedTheme);
+        } else {
+          const savedThemeLocal = localStorage.getItem('theme') || 'light';
+          applyTheme(savedThemeLocal);
+        }
+        loadDashboardData();
+      }
+    });
+
+    darkToggle.addEventListener('click', async () => {
+      if (!auth.currentUser) return;
+      const userThemeDoc = doc(db, "userThemes", auth.currentUser.uid);
+      if (document.body.classList.contains('dark')) {
+        applyTheme('light');
+        localStorage.setItem('theme', 'light');
+        await setDoc(userThemeDoc, { theme: 'light' });
+      } else {
+        applyTheme('dark');
+        localStorage.setItem('theme', 'dark');
+        await setDoc(userThemeDoc, { theme: 'dark' });
+      }
+    });
+
+    async function loadDashboardData() {
+      try {
+        const [productsSnapshot, salesSnapshot] = await Promise.all([
+          getDocs(collection(db, "products")),
+          getDocs(collection(db, "sales"))
+        ]);
+
+        const totalItems = productsSnapshot.size;
+        const totalStockPrice = productsSnapshot.docs.reduce((sum, d) => sum + (Number(d.data().price) || 0), 0);
+        const totalSalesAmount = salesSnapshot.docs.reduce((sum, d) => sum + (Number(d.data().price) || 0), 0);
+
+        document.getElementById("totalStock").textContent = totalItems;
+        document.getElementById("totalStockPrice").textContent = `₹${totalStockPrice.toLocaleString()}`;
+        document.getElementById("totalSales").textContent = `₹${totalSalesAmount.toLocaleString()}`;
+        document.getElementById("suppliers").textContent = 32;
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+      }
+    }
+  </script>
+</body>
+</html>
