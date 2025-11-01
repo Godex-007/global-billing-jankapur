@@ -131,7 +131,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot, query, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, onSnapshot, query, orderBy, limit, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
     apiKey: "AIzaSyCW7i-YbaiPrsJoFHPBETqegq9WBqfE_Ug",
@@ -140,7 +140,7 @@
     storageBucket: "global-computer-jankapur.firebasestorage.app",
     messagingSenderId: "972945821905",
     appId: "1:972945821905:web:338f438404fba5442675f0"
-  };
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -354,9 +354,10 @@
 
         try {
             const memoRef = doc(db, "settings", "memoCounter");
-            await updateDoc(memoRef, {
+            
+            await setDoc(memoRef, {
                 lastNo: increment(1)
-            });
+            }, { merge: true });
             
             window.print();
             clearInvoice();
@@ -464,4 +465,3 @@
 </body>
 
 </html>
-
